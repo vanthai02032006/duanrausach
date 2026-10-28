@@ -40,7 +40,7 @@ export function App() {
     dashboard: { title: "Bảng điều khiển tổng quan", subtitle: "Theo dõi dữ liệu vận hành trang trại theo thời gian thực" },
     lots: { title: "Quản lý Lô trồng", subtitle: "Danh mục các khu vực canh tác và giai đoạn sinh trưởng" },
     varieties: { title: "Danh mục Giống cây trồng", subtitle: "Thông tin chu kỳ sinh trưởng và quy chuẩn chăm sóc" },
-    care: { title: "Nhật ký chăm sóc nông trại", subtitle: "Ghi chép công việc tưới tiêu, bón phân, làm cỏ và theo dõi" },
+    care: { title: "Lịch & Nhật ký chăm sóc nông trại", subtitle: "Lập lịch công việc, AI sinh kế hoạch mùa vụ và theo dõi canh tác" },
     materials: { title: "Quản lý Kho vật tư", subtitle: "Kiểm soát tồn kho hạt giống, phân bón, chế phẩm sinh học" },
     harvests: { title: "Ghi nhận Thu hoạch nông sản", subtitle: "Quản lý sản lượng và tự động sinh mã QR truy xuất nguồn gốc" },
     sales: { title: "Bán hàng & Doanh thu", subtitle: "Quản lý phiếu xuất bán và báo cáo tài chính" },

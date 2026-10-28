@@ -232,6 +232,41 @@ class Command(BaseCommand):
                 }
             )
 
+        # 5b. Future Scheduled Care Tasks (Lịch chăm sóc dự kiến)
+        scheduled_tasks = [
+            ("LO-A01", CareLog.Activity.WATER, 0, "Tưới ẩm gốc buổi sáng hệ thống phun sương", "Kiểm tra độ ẩm đất trước khi tưới, duy trì 70-75%"),
+            ("LO-A01", CareLog.Activity.FERTILIZE, 2, "Bón thúc đợt 2 phân trùn quế hữu cơ", "Bón cách gốc 10cm, kết hợp xới nhẹ mặt luống"),
+            ("LO-A01", CareLog.Activity.PEST_CHECK, 4, "Kiểm tra sâu tơ và rầy mềm dưới mặt lá", "Chú ý mép luống giáp nhà màng"),
+            ("LO-A02", CareLog.Activity.WATER, 0, "Tưới phun sương làm mát buổi sáng 15 phút", "Tránh tưới mạnh làm gãy búp lá"),
+            ("LO-A02", CareLog.Activity.WEED, 1, "Làm cỏ sạch gốc luống và tỉa lá già vàng", "Nhổ cỏ triệt để tránh cạnh tranh dinh dưỡng"),
+            ("LO-A02", CareLog.Activity.OBSERVE, 3, "Đánh giá độ che phủ mặt luống và độ dày búp", "Chuẩn bị lịch nghiệm thu thu hoạch"),
+            ("LO-B01", CareLog.Activity.WATER, 0, "Duy trì mực nước rãnh rau muống 5cm", "Đảm bảo nước sạch không đọng rác"),
+            ("LO-B01", CareLog.Activity.FERTILIZE, 2, "Tưới bổ sung dịch trùn quế pha loãng 1:200", "Phun đều hai mặt lá vào lúc trời râm mát"),
+            ("LO-B02", CareLog.Activity.PEST_CHECK, 1, "Kiểm tra bẫy dính màu vàng và bắt sâu thủ công", "Ghi nhận mật độ bọ nhảy nếu có"),
+            ("LO-B02", CareLog.Activity.WATER, 2, "Tưới nước ẩm rễ buổi chiều 16h30", "Kiểm tra pH nước tưới đạt 6.5"),
+            ("LO-C01", CareLog.Activity.OBSERVE, 0, "Tỉa bớt cành phụ nách lá cà chua bi", "Tập trung dinh dưỡng nuôi chùm quả chính"),
+            ("LO-C01", CareLog.Activity.WATER, 1, "Hệ thống tưới nhỏ giọt 30 lít/hàng", "Đo độ ẩm bầu giá thể"),
+            ("LO-C01", CareLog.Activity.PEST_CHECK, 3, "Kiểm tra bệnh mốc sương và ruồi đục lá", "Phun phòng nấm Trichoderma sinh học"),
+            ("LO-C02", CareLog.Activity.WATER, 0, "Tưới gốc dưa leo baby buổi sáng", "Kiểm tra đầu vòi nhỏ giọt"),
+            ("LO-C02", CareLog.Activity.OBSERVE, 2, "Đo kích thước quả lứa 2 trên giàn", "Ghi nhận quả đạt chuẩn xuất bán"),
+        ]
+
+        for lot_code, act, days_ahead, note, obs in scheduled_tasks:
+            lot = lots.get(lot_code)
+            if not lot:
+                continue
+            CareLog.objects.get_or_create(
+                lot=lot,
+                activity=act,
+                note=note,
+                defaults={
+                    "occurred_at": timezone.now() + timedelta(days=days_ahead, hours=random.randint(7, 10)),
+                    "status": CareLog.Status.TODO,
+                    "observation": obs,
+                    "performed_by": random.choice([users["kythuat"], users["nhanvien"]]),
+                }
+            )
+
         # 6. Material Usages
         usage_data = [
             ("LO-A01", "Đạm cá thủy phân hữu cơ Fish Emulsion", 1.5, "Pha 3 bình 16L phun lá định kỳ"),

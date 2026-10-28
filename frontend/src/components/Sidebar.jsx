@@ -28,7 +28,7 @@ export function Sidebar({ currentView, setCurrentView }) {
     { id: "dashboard", label: "Tổng quan", icon: <LayoutDashboard /> },
     { id: "lots", label: "Lô trồng", icon: <Grid /> },
     { id: "varieties", label: "Giống cây", icon: <Flower2 /> },
-    { id: "care", label: "Nhật ký chăm sóc", icon: <CalendarDays /> },
+    { id: "care", label: "Lịch & Nhật ký chăm sóc", icon: <CalendarDays /> },
     { id: "materials", label: "Vật tư & Kho", icon: <Boxes /> },
     { id: "harvests", label: "Thu hoạch", icon: <Wheat /> },
     ...(isManager ? [{ id: "sales", label: "Bán hàng", icon: <CircleDollarSign /> }] : []),
