@@ -1,0 +1,52 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}GreenFarm AI{% endblock %} | GreenFarm AI</title>
+  <link rel="stylesheet" href="{% static 'farm/css/app.css' %}">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark">✿</span><span><strong>GreenFarm <em>AI</em></strong><small>QUẢN LÝ TRANG TRẠI</small></span></a>
+    <div class="workspace-label">KHÔNG GIAN LÀM VIỆC</div>
+    <nav class="nav">
+      <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><span>▦</span>Tổng quan</a>
+      <div class="nav-section">CANH TÁC</div>
+      <a class="nav-link {% if request.resolver_match.url_name in 'lots lot_create lot_edit' %}active{% endif %}" href="{% url 'lots' %}"><span>▤</span>Lô trồng</a>
+      <a class="nav-link {% if request.resolver_match.url_name in 'varieties variety_create variety_edit' %}active{% endif %}" href="{% url 'varieties' %}"><span>♧</span>Giống cây</a>
+      <a class="nav-link {% if request.resolver_match.url_name in 'care care_create care_edit' %}active{% endif %}" href="{% url 'care' %}"><span>◷</span>Lịch & nhật ký</a>
+      <a class="nav-link {% if request.resolver_match.url_name in 'materials material_create material_edit material_usage_create' %}active{% endif %}" href="{% url 'materials' %}"><span>▧</span>Vật tư</a>
+      <a class="nav-link {% if request.resolver_match.url_name in 'harvests harvest_create' %}active{% endif %}" href="{% url 'harvests' %}"><span>♙</span>Thu hoạch</a>
+      {% if is_manager %}<a class="nav-link {% if request.resolver_match.url_name in 'sales sale_create' %}active{% endif %}" href="{% url 'sales' %}"><span>₫</span>Bán sản phẩm</a>{% endif %}
+      <div class="nav-section">DỮ LIỆU & AI</div>
+      <a class="nav-link {% if request.resolver_match.url_name == 'trace' %}active{% endif %}" href="{% url 'trace' %}"><span>⌕</span>Truy xuất nguồn gốc</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'ai_assistant' %}active{% endif %}" href="{% url 'ai_assistant' %}"><span>✳</span>Trợ lý Gemini AI <b class="nav-pill">AI</b></a>
+      {% if is_manager or is_technician %}
+      <a class="nav-link {% if request.resolver_match.url_name in 'knowledge knowledge_create knowledge_edit' %}active{% endif %}" href="{% url 'knowledge' %}"><span>▣</span>Kho tri thức AI</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}"><span>▥</span>Báo cáo & thống kê</a>
+      {% endif %}
+      {% if is_manager %}
+      <div class="nav-section">QUẢN TRỊ</div>
+      <a class="nav-link {% if request.resolver_match.url_name == 'ai_monitor' %}active{% endif %}" href="{% url 'ai_monitor' %}"><span>◉</span>Giám sát AI</a>
+      <a class="nav-link {% if request.resolver_match.url_name in 'accounts account_create' %}active{% endif %}" href="{% url 'accounts' %}"><span>♙</span>Tài khoản & quyền</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-bottom"><div class="weather-card"><span>☀</span><div><strong>Trang trại xanh</strong><small>Ghi nhận theo dữ liệu thực tế</small></div></div><small>GreenFarm AI · Bản demo học phần</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div><div class="eyebrow">NÔNG NGHIỆP THÔNG MINH</div><h1>{% block page_heading %}Tổng quan{% endblock %}</h1></div>
+      <div class="topbar-right"><span class="system-status"><i></i> Hệ thống hoạt động</span><div class="avatar">{{ request.user.first_name|default:request.user.username|slice:":1"|upper }}</div><div class="user-meta"><strong>{{ request.user.first_name|default:request.user.username }}</strong><small>{% if current_role == 'Manager' %}Quản lý{% elif current_role == 'Technician' %}Kỹ thuật viên{% elif current_role == 'Superuser' %}Quản trị hệ thống{% else %}Nhân viên{% endif %}</small></div><form method="post" action="{% url 'logout' %}" class="logout-form">{% csrf_token %}<button type="submit" class="logout-btn" title="Đăng xuất">↗</button></form></div>
+    </header>
+    <section class="content">
+      {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </section>
+    <footer class="footer"><div><span class="footer-leaf">✿</span><strong>GreenFarm AI</strong><span class="footer-sep">·</span><span>Minh bạch từ gieo trồng đến thu hoạch</span></div><small>AI chỉ đưa ra gợi ý tham khảo. Cần chuyên gia nông nghiệp kiểm chứng.</small></footer>
+  </main>
+</div>
+<script src="{% static 'farm/js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

@@ -1,0 +1,1 @@
+Sắp xếp lô cần kiểm tra dựa trên nhật ký quá hạn, trạng thái công việc và quan sát được ghi lại. Giải thích dữ liệu làm căn cứ; không chẩn đoán bệnh chắc chắn.

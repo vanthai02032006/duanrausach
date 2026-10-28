@@ -1,0 +1,1 @@
+Gợi ý các kiểm tra trước khi cân nhắc thu hoạch dựa trên ngày gieo, giống và nhật ký. Không cam kết ngày thu hoạch nếu dữ liệu thiếu.

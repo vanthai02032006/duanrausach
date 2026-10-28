@@ -1,0 +1,28 @@
+{% extends 'farm/base.html' %}
+{% block title %}Tổng quan{% endblock %}{% block page_heading %}Tổng quan{% endblock %}
+{% block content %}
+<div class="welcome-banner"><div><div class="welcome-kicker">{% now "l, d/m/Y" %}</div><h2>Xin chào, {{ request.user.first_name|default:request.user.username }}! <span>🌱</span></h2><p>Đây là tình hình trang trại và những công việc cần ưu tiên hôm nay.</p></div><div class="banner-illustration"><span>🌿</span><span>🥬</span><span>🍃</span></div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-top"><span>Tổng số lô trồng</span><span class="stat-icon green">▤</span></div><strong>{{ total_lots }}</strong><small class="stat-foot">Lô có trong hệ thống</small></div>
+  <div class="stat-card"><div class="stat-top"><span>Đang canh tác</span><span class="stat-icon blue">♧</span></div><strong>{{ active_lots }}</strong><small class="stat-foot">Lô đang chăm sóc hoặc sắp thu hoạch</small></div>
+  <div class="stat-card"><div class="stat-top"><span>Diện tích quản lý</span><span class="stat-icon yellow">▦</span></div><strong>{{ total_area|floatformat:0 }} <small>m²</small></strong><small class="stat-foot">Tổng diện tích các lô</small></div>
+  <div class="stat-card"><div class="stat-top"><span>Chờ xử lý</span><span class="stat-icon rose">◷</span></div><strong>{{ pending_logs }}</strong><small class="stat-foot">Công việc chăm sóc chưa hoàn thành</small></div>
+</div>
+<div class="dashboard-grid">
+  <section class="panel panel-large"><div class="panel-heading"><div><h3>Hoạt động chăm sóc gần đây</h3><p>Theo nhật ký thực tế từ các lô trồng</p></div><a class="text-link" href="{% url 'care' %}">Xem nhật ký →</a></div>
+  {% if recent_logs %}<div class="activity-list">{% for log in recent_logs %}<div class="activity-row"><span class="activity-symbol">{% if log.activity == 'water' %}💧{% elif log.activity == 'fertilize' %}🌱{% elif log.activity == 'pest_check' %}🔎{% elif log.activity == 'weed' %}🌿{% else %}📝{% endif %}</span><div class="activity-body"><strong>{{ log.get_activity_display }} · {{ log.lot.code }}</strong><small>{{ log.lot.name }} · {{ log.occurred_at|date:'d/m/Y H:i' }}</small><p>{{ log.note|truncatechars:100 }}</p></div><span class="pill {% if log.status == 'done' %}success{% elif log.status == 'todo' %}warning{% else %}info{% endif %}">{{ log.get_status_display }}</span></div>{% endfor %}</div>{% else %}<div class="empty-state">Chưa có nhật ký chăm sóc. <a href="{% url 'care_create' %}">Ghi nhật ký đầu tiên</a>.</div>{% endif %}
+  </section>
+  <section class="panel"><div class="panel-heading"><div><h3>Cần chú ý</h3><p>Ưu tiên từ dữ liệu hệ thống</p></div><span class="panel-heading-icon">◉</span></div>
+    {% if low_stock %}{% for m in low_stock %}<div class="alert-row"><span class="alert-icon orange">!</span><div><strong>Vật tư sắp hết: {{ m.name }}</strong><small>Còn {{ m.quantity }} {{ m.unit }} · Ngưỡng {{ m.minimum_quantity }}</small></div></div>{% endfor %}{% endif %}
+    {% if urgent_lots %}{% for lot in urgent_lots %}<div class="alert-row"><span class="alert-icon green">♧</span><div><strong>{{ lot.code }} · Đang gần thu hoạch</strong><small>{{ lot.variety.name }} · Dự kiến {{ lot.expected_harvest_date|date:'d/m/Y'|default:'chưa xác định' }}</small></div></div>{% endfor %}{% endif %}
+    {% if not low_stock and not urgent_lots %}<div class="empty-state">Chưa có cảnh báo dữ liệu. Tiếp tục cập nhật nhật ký để hệ thống theo dõi tốt hơn.</div>{% endif %}
+    <a class="btn btn-outline btn-block" href="{% url 'ai_assistant' %}">✳ Hỏi trợ lý Gemini AI</a>
+  </section>
+</div>
+<div class="dashboard-grid bottom-grid">
+  <section class="panel"><div class="panel-heading"><div><h3>Lô trồng</h3><p>Tóm tắt tiến độ canh tác</p></div><a class="text-link" href="{% url 'lots' %}">Tất cả lô →</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Mã / Tên lô</th><th>Giống cây</th><th>Diện tích</th><th>Trạng thái</th></tr></thead><tbody>{% for lot in recent_lots %}<tr><td><strong>{{ lot.code }}</strong><small class="cell-sub">{{ lot.name }}</small></td><td>{{ lot.variety.name }}</td><td>{{ lot.area_m2|floatformat:0 }} m²</td><td><span class="pill {% if lot.status == 'ready' %}warning{% elif lot.status == 'harvested' %}success{% else %}info{% endif %}">{{ lot.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="4">Chưa có lô trồng.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+  <section class="panel"><div class="panel-heading"><div><h3>Tổng hợp tháng này</h3><p>Số liệu từ dữ liệu ghi nhận</p></div></div><div class="summary-number"><span>Sản lượng đã ghi nhận</span><strong>{{ monthly_harvest_kg|floatformat:1 }} <small>kg</small></strong></div><div class="summary-number"><span>Doanh thu ghi nhận</span><strong>{{ monthly_revenue|floatformat:0 }} <small>VNĐ</small></strong></div><div class="summary-number"><span>Yêu cầu AI trong 7 ngày</span><strong>{{ ai_week_count }}</strong></div><div class="soft-note">Các số liệu chỉ phản ánh bản ghi đã nhập; không đại diện cho dữ liệu ngoài hệ thống.</div></section>
+</div>
+{% endblock %}

@@ -1,0 +1,1 @@
+Sinh lịch chăm sóc tham khảo cho lô trồng. Phân biệt việc cần làm ngay với việc cần theo dõi; không tự đặt định lượng đầu vào nếu tài liệu không có.
