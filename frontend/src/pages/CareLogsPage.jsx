@@ -337,31 +337,49 @@ export function CareLogsPage() {
 
         {/* Action Buttons Right */}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setAiModalOpen(true);
-              if (lots.length > 0 && !aiSelectedLot) setAiSelectedLot(lots[0].id.toString());
-            }}
-            style={{
-              background: "#fdf4ff",
-              color: "#9333ea",
-              border: "1px solid #f0abfc",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontWeight: 600,
-            }}
-          >
-            <Sparkles size={16} />
-            <span>🤖 AI Sinh Lịch Chăm Sóc</span>
-          </button>
+          {isTechOrManager && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setAiModalOpen(true);
+                if (lots.length > 0 && !aiSelectedLot) setAiSelectedLot(lots[0].id.toString());
+              }}
+              style={{
+                background: "#fdf4ff",
+                color: "#9333ea",
+                border: "1px solid #f0abfc",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 600,
+              }}
+            >
+              <Sparkles size={16} />
+              <span>🤖 AI Sinh Lịch Chăm Sóc</span>
+            </button>
+          )}
 
           {activeTab === "schedule" ? (
-            <button className="btn btn-primary" onClick={handleOpenScheduleTask}>
-              <Plus size={18} />
-              Lên lịch công việc mới
-            </button>
+            isTechOrManager ? (
+              <button className="btn btn-primary" onClick={handleOpenScheduleTask}>
+                <Plus size={18} />
+                Lên lịch công việc mới
+              </button>
+            ) : (
+              <span
+                style={{
+                  fontSize: "0.82rem",
+                  color: "#0369a1",
+                  background: "#e0f2fe",
+                  border: "1px solid #bae6fd",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  fontWeight: 600,
+                }}
+              >
+                👁️ Nhân viên chỉ có quyền xem lịch
+              </span>
+            )
           ) : (
             <button className="btn btn-primary" onClick={handleOpenCreateLog}>
               <Plus size={18} />
@@ -441,14 +459,20 @@ export function CareLogsPage() {
               <p style={{ color: "var(--text-muted)", marginBottom: "16px" }}>
                 Bạn có thể tạo lịch công việc mới hoặc dùng Trí tuệ Nhân tạo Gemini để tự động sinh lịch chăm sóc chuẩn VietGAP.
               </p>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button className="btn btn-secondary" onClick={() => setAiModalOpen(true)}>
-                  <Sparkles size={16} style={{ color: "#9333ea" }} /> AI Sinh Lịch Chăm Sóc
-                </button>
-                <button className="btn btn-primary" onClick={handleOpenScheduleTask}>
-                  <Plus size={16} /> Lên lịch thủ công
-                </button>
-              </div>
+              {isTechOrManager ? (
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button className="btn btn-secondary" onClick={() => setAiModalOpen(true)}>
+                    <Sparkles size={16} style={{ color: "#9333ea" }} /> AI Sinh Lịch Chăm Sóc
+                  </button>
+                  <button className="btn btn-primary" onClick={handleOpenScheduleTask}>
+                    <Plus size={16} /> Lên lịch thủ công
+                  </button>
+                </div>
+              ) : (
+                <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                  Hiện chưa có công việc chăm sóc nào được lên lịch cho lô này.
+                </p>
+              )}
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "16px" }}>
@@ -520,26 +544,39 @@ export function CareLogsPage() {
                         Phụ trách: <strong>{task.performed_by}</strong>
                       </span>
 
-                      <div style={{ display: "inline-flex", gap: "6px" }}>
-                        <button
-                          className="btn btn-sm btn-primary"
-                          onClick={() => handleMarkAsDone(task)}
-                          title="Đánh dấu đã hoàn thành và chuyển vào Nhật ký canh tác"
-                          style={{ background: "#059669", display: "inline-flex", alignItems: "center", gap: "4px" }}
-                        >
-                          <Check size={14} /> Hoàn thành
-                        </button>
-                        {canEdit && (
+                      {isTechOrManager ? (
+                        <div style={{ display: "inline-flex", gap: "6px" }}>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => handleMarkAsDone(task)}
+                            title="Đánh dấu đã hoàn thành và chuyển vào Nhật ký canh tác"
+                            style={{ background: "#059669", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                          >
+                            <Check size={14} /> Hoàn thành
+                          </button>
                           <button className="btn btn-sm btn-secondary" onClick={() => handleOpenEdit(task)} title="Chỉnh sửa lịch">
                             <Edit size={13} />
                           </button>
-                        )}
-                        {isManager && (
-                          <button className="btn btn-sm btn-secondary" onClick={() => handleDelete(task)} title="Xóa lịch" style={{ color: "#dc2626" }}>
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                      </div>
+                          {isManager && (
+                            <button className="btn btn-sm btn-secondary" onClick={() => handleDelete(task)} title="Xóa lịch" style={{ color: "#dc2626" }}>
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: "0.78rem",
+                            color: "var(--text-muted)",
+                            fontStyle: "italic",
+                            background: "#f1f5f9",
+                            padding: "3px 8px",
+                            borderRadius: "4px",
+                          }}
+                        >
+                          👁️ Nhân viên chỉ xem
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

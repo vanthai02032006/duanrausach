@@ -58,6 +58,10 @@ def care_create_view(request):
     status = data.get("status", CareLog.Status.DONE)
     occurred_at = data.get("occurred_at")
 
+    role = get_user_role(request.user)
+    if status == CareLog.Status.TODO and role not in {"Manager", "Technician", "Superuser"}:
+        return api_response(message="Nhân viên chỉ có quyền xem lịch chăm sóc, không được tạo lịch mới.", success=False, status=403)
+
     if not lot_id or not activity or not note:
         return api_response(message="Vui lòng chọn lô trồng, loại hoạt động và nội dung ghi chú.", success=False, status=400)
 
@@ -83,6 +87,8 @@ def care_create_view(request):
 def care_update_view(request, pk):
     log = get_object_or_404(CareLog, pk=pk)
     role = get_user_role(request.user)
+    if role == "Staff" and log.status == CareLog.Status.TODO:
+        return api_response(message="Nhân viên chỉ có quyền xem lịch chăm sóc, không được chỉnh sửa lịch.", success=False, status=403)
     if role == "Staff" and log.performed_by_id != request.user.id:
         return api_response(message="Bạn không có quyền sửa nhật ký của người khác.", success=False, status=403)
 
