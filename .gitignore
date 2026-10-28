@@ -27,6 +27,12 @@ media/
 *.sqlite3
 db.sqlite3
 
+# Documents
+*.docx
+*.pptx
+*.xlsx
+*.pdf
+
 # Environment Variables & Secrets
 .env
 .env.*

@@ -1,5 +1,16 @@
 # GreenFarm AI — Hệ thống quản lý trang trại rau sạch & Trợ lý AI
 
+> **Học phần**: Ứng dụng Trí tuệ Nhân tạo (AIA331) — Lớp 80292  
+> **Giảng viên hướng dẫn**: TS. Nguyễn Tuấn Anh  
+> **Sinh viên thực hiện**:
+> * Cấn Văn Thái — MSV: DTC245200867 (Lớp K23C)
+> * Hoàng Anh Tú — MSV: DTC245200321 (Lớp K23C)
+> 
+> 📚 **Tài liệu học phần & Báo cáo đồ án**:
+> * 📖 **[Báo cáo đồ án chi tiết (8 Chương chuẩn đề cương) — BAO_CAO_DU_AN.md](BAO_CAO_DU_AN.md)**
+> * 📊 **[Slide thuyết trình bảo vệ đồ án (Kèm phân vai 2 SV) — SLIDE_THUYET_TRINH.md](SLIDE_THUYET_TRINH.md)**
+> * 🧪 **[Đặc tả 37 Test Case kiểm thử hộp đen — docs/6.3_Kiem_thu_hop_den.md](docs/6.3_Kiem_thu_hop_den.md)**
+
 Dự án đã được tái cấu trúc hoàn chỉnh và chuyên nghiệp theo mô hình **Tách biệt Backend API + Frontend SPA**, phân tầng rõ ràng (Layered / Clean Architecture) theo chuẩn thiết kế hiện đại.
 
 ---
