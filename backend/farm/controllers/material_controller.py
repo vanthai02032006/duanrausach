@@ -19,7 +19,7 @@ def serialize_material(m):
         "minimum_quantity": float(m.minimum_quantity),
         "unit_price": float(m.unit_price),
         "is_low_stock": m.quantity <= m.minimum_quantity,
-        "description": m.description,
+        "description": m.notes,
     }
 
 
@@ -76,7 +76,7 @@ def material_create_view(request):
         quantity=Decimal(str(data.get("quantity", 0))),
         minimum_quantity=Decimal(str(data.get("minimum_quantity", 0))),
         unit_price=Decimal(str(data.get("unit_price", 0))),
-        description=data.get("description", "").strip(),
+        notes=data.get("description", "").strip(),
     )
     return api_response(serialize_material(m), message="Đã thêm vật tư mới!", status=201)
 
@@ -99,7 +99,7 @@ def material_update_view(request, pk):
     if "unit_price" in data:
         m.unit_price = Decimal(str(data["unit_price"]))
     if "description" in data:
-        m.description = data["description"].strip()
+        m.notes = data["description"].strip()
     m.save()
     return api_response(serialize_material(m), message="Đã cập nhật vật tư thành công!")
 

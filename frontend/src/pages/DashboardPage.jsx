@@ -61,9 +61,45 @@ export function DashboardPage({ setCurrentView }) {
           label="Cảnh báo tồn kho"
           value={data?.low_stock?.length || 0}
           icon={<AlertTriangle size={22} style={{ color: "#d97706" }} />}
-          change="Cần bổ sung vật tư"
-          changeType="down"
+          change={data?.low_stock?.length > 0 ? "Cần bổ sung vật tư" : "Kho an toàn"}
+          changeType={data?.low_stock?.length > 0 ? "down" : "up"}
         />
+      </div>
+
+      {/* Quick Action Shortcuts */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        flexWrap: "wrap",
+        marginBottom: "24px",
+        background: "white",
+        padding: "14px 20px",
+        borderRadius: "var(--radius-lg)",
+        border: "1px solid var(--border)",
+        boxShadow: "var(--shadow-sm)"
+      }}>
+        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: "6px" }}>
+          Thao tác nhanh:
+        </span>
+        <button className="btn btn-secondary btn-sm" onClick={() => setCurrentView("lots")}>
+          ➕ Quản lý Lô trồng
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => setCurrentView("care")}>
+          📝 Ghi Nhật ký
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => setCurrentView("materials")}>
+          📦 Xuất kho Vật tư
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => setCurrentView("harvests")}>
+          🌾 Thu hoạch & Mã QR
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => setCurrentView("trace")}>
+          🔍 Tra cứu Nguồn gốc
+        </button>
+        <button className="btn btn-primary btn-sm" style={{ marginLeft: "auto" }} onClick={() => setCurrentView("ai")}>
+          ✨ Trợ lý Nông nghiệp AI
+        </button>
       </div>
 
       {/* AI Banner */}
@@ -150,27 +186,35 @@ export function DashboardPage({ setCurrentView }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Urgent lots */}
           <div className="card">
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>Lô cần thu hoạch gấp</h3>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🌾</span> Lô cần thu hoạch gấp
+            </h3>
             {data?.urgent_lots?.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>Hiện không có lô nào sắp đến hạn thu hoạch.</p>
+              <div style={{ textAlign: "center", padding: "20px 10px", color: "var(--text-muted)" }}>
+                <div style={{ fontSize: "1.8rem", marginBottom: "6px" }}>✅</div>
+                <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>Không có lô đến hạn gấp</div>
+                <div style={{ fontSize: "0.75rem" }}>Tất cả các lô đang phát triển theo đúng kế hoạch.</div>
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {data?.urgent_lots?.map((l) => (
                   <div
                     key={l.id}
                     style={{
-                      padding: "10px 14px",
+                      padding: "12px 14px",
                       background: "#fffbeb",
-                      border: "1px solid #fef3c7",
-                      borderRadius: "8px",
+                      border: "1px solid #fde68a",
+                      borderLeft: "4px solid #f59e0b",
+                      borderRadius: "var(--radius-md)",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      transition: "var(--transition)",
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: "0.88rem" }}>{l.code} - {l.name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#b45309" }}>Dự kiến: {l.expected_harvest_date}</div>
+                      <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#92400e" }}>{l.code} - {l.name}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#b45309", marginTop: "2px" }}>Dự kiến: {l.expected_harvest_date}</div>
                     </div>
                     <Badge variant="warning">Sắp thu hoạch</Badge>
                   </div>
@@ -181,28 +225,36 @@ export function DashboardPage({ setCurrentView }) {
 
           {/* Low stock */}
           <div className="card">
-            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px" }}>Vật tư dưới mức tối thiểu</h3>
+            <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>📦</span> Vật tư dưới mức tối thiểu
+            </h3>
             {data?.low_stock?.length === 0 ? (
-              <p style={{ color: "#16a34a", fontSize: "0.88rem" }}>Kho vật tư đang ở mức an toàn.</p>
+              <div style={{ textAlign: "center", padding: "20px 10px", color: "#16a34a" }}>
+                <div style={{ fontSize: "1.8rem", marginBottom: "6px" }}>🛡️</div>
+                <div style={{ fontSize: "0.88rem", fontWeight: 700 }}>Kho vật tư an toàn</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Mọi loại phân bón & hạt giống đều đủ định mức.</div>
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {data?.low_stock?.map((m) => (
                   <div
                     key={m.id}
                     style={{
-                      padding: "10px 14px",
+                      padding: "12px 14px",
                       background: "#fef2f2",
-                      border: "1px solid #fee2e2",
-                      borderRadius: "8px",
+                      border: "1px solid #fecaca",
+                      borderLeft: "4px solid #ef4444",
+                      borderRadius: "var(--radius-md)",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      transition: "var(--transition)",
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: "0.88rem" }}>{m.name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#dc2626" }}>
-                        Còn lại: {m.quantity} {m.unit} (Mức tối thiểu: {m.minimum_quantity} {m.unit})
+                      <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#991b1b" }}>{m.name}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: "2px" }}>
+                        Còn lại: <strong>{m.quantity} {m.unit}</strong> (Định mức: {m.minimum_quantity} {m.unit})
                       </div>
                     </div>
                     <Badge variant="danger">Cần nhập</Badge>

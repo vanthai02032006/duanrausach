@@ -19,11 +19,12 @@ export function HarvestsPage({ setCurrentView, setTraceCodeToSearch }) {
   const [search, setSearch] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [qrModalHarvest, setQrModalHarvest] = useState(null);
   const [formData, setFormData] = useState({
     lot_id: "",
     product_name: "",
     quantity_kg: "",
-    quality_grade: "A",
+    quality_grade: "pending",
     harvested_at: new Date().toISOString().split("T")[0],
     note: "",
   });
@@ -57,7 +58,7 @@ export function HarvestsPage({ setCurrentView, setTraceCodeToSearch }) {
       lot_id: firstLot?.id || "",
       product_name: firstLot ? firstLot.name.replace("Lô ", "") : "Rau sạch",
       quantity_kg: "",
-      quality_grade: "A",
+      quality_grade: "pending",
       harvested_at: new Date().toISOString().split("T")[0],
       note: "",
     });
@@ -149,20 +150,48 @@ export function HarvestsPage({ setCurrentView, setTraceCodeToSearch }) {
                   <td><strong>{h.product_name}</strong></td>
                   <td><span style={{ fontSize: "1rem", fontWeight: 700 }}>{formatKg(h.quantity_kg)}</span></td>
                   <td>
-                    <Badge variant={h.quality_grade === "A" ? "success" : h.quality_grade === "B" ? "info" : "warning"}>
+                    <Badge variant={h.quality_grade === "pass" ? "success" : h.quality_grade === "review" ? "danger" : "warning"}>
                       {h.quality_grade_display}
                     </Badge>
                   </td>
                   <td>{h.harvested_at}</td>
                   <td>{h.recorded_by}</td>
                   <td style={{ textAlign: "right" }}>
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleTraceClick(h.trace_code)}
-                      title="Xem nhật ký truy xuất nguồn gốc"
-                    >
-                      <QrCode size={14} /> Tra cứu
-                    </button>
+                    <div style={{ display: "inline-flex", gap: "6px" }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setQrModalHarvest(h)}
+                        title="Xem và quét mã QR trực tiếp"
+                        style={{ background: "#059669", color: "#fff", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                      >
+                        <QrCode size={14} /> Xem QR
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleTraceClick(h.trace_code)}
+                        title="Xem nhật ký canh tác số"
+                      >
+                        Tra cứu
+                      </button>
+                      <a
+                        href={`/api/trace/${h.trace_code}/qr/?download=1`}
+                        className="btn btn-outline btn-sm"
+                        title="Tải ảnh QR PNG"
+                        style={{ padding: "4px 8px" }}
+                      >
+                        💾 Tải QR
+                      </a>
+                      <a
+                        href={`/api/trace/${h.trace_code}/label/`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-outline btn-sm"
+                        title="Mở tem nhãn dán bao bì chuẩn VietGAP"
+                        style={{ padding: "4px 8px" }}
+                      >
+                        🏷 Tem nhãn
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -274,6 +303,104 @@ export function HarvestsPage({ setCurrentView, setTraceCodeToSearch }) {
             />
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Quick View QR Code */}
+      <Modal
+        isOpen={Boolean(qrModalHarvest)}
+        onClose={() => setQrModalHarvest(null)}
+        title={`Mã QR nguồn gốc: ${qrModalHarvest?.product_name || "Lô thu hoạch"}`}
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setQrModalHarvest(null)}>
+              Đóng
+            </button>
+            {qrModalHarvest && (
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  const code = qrModalHarvest.trace_code;
+                  setQrModalHarvest(null);
+                  handleTraceClick(code);
+                }}
+              >
+                Tra cứu chi tiết trên Web
+              </button>
+            )}
+          </>
+        }
+      >
+        {qrModalHarvest && (
+          <div style={{ textAlign: "center", padding: "10px 0" }}>
+            <div style={{
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "16px",
+              display: "inline-block",
+              boxShadow: "0 4px 12px rgba(16, 185, 129, 0.12)"
+            }}>
+              <img
+                src={`/api/trace/${qrModalHarvest.trace_code}/qr/?size=8`}
+                alt={`QR code ${qrModalHarvest.trace_code}`}
+                style={{ width: "220px", height: "220px", display: "block", margin: "0 auto", borderRadius: "8px" }}
+              />
+              <div style={{
+                marginTop: "10px",
+                fontFamily: "monospace",
+                fontWeight: 800,
+                fontSize: "1.1rem",
+                color: "#065f46",
+                letterSpacing: "1px"
+              }}>
+                {qrModalHarvest.trace_code}
+              </div>
+            </div>
+
+            <div style={{
+              background: "#ecfdf5",
+              color: "#065f46",
+              padding: "12px 16px",
+              borderRadius: "10px",
+              fontSize: "0.88rem",
+              lineHeight: 1.5,
+              marginBottom: "16px",
+              textAlign: "left",
+              borderLeft: "4px solid #10b981"
+            }}>
+              <div style={{ fontWeight: 700, marginBottom: "4px" }}>📱 Hướng dẫn quét kiểm tra:</div>
+              <div>• Dùng <strong>Camera điện thoại</strong>, <strong>ứng dụng Zalo</strong> hoặc <strong>Google Lens</strong> hướng vào mã QR phía trên màn hình để quét thử.</div>
+              <div>• Hoặc vào mục <strong>Truy xuất nguồn gốc</strong> trên thanh menu và bật camera web để quét.</div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", textAlign: "left", fontSize: "0.85rem", background: "#f8fafc", padding: "12px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
+              <div><strong>Sản phẩm:</strong> {qrModalHarvest.product_name}</div>
+              <div><strong>Lô trồng:</strong> {qrModalHarvest.lot_code}</div>
+              <div><strong>Sản lượng:</strong> {formatKg(qrModalHarvest.quantity_kg)}</div>
+              <div><strong>Ngày thu hoạch:</strong> {qrModalHarvest.harvested_at}</div>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              <a
+                href={`/api/trace/${qrModalHarvest.trace_code}/qr/?download=1`}
+                className="btn btn-outline"
+                style={{ fontSize: "0.85rem" }}
+              >
+                💾 Tải ảnh QR (PNG)
+              </a>
+              <a
+                href={`/api/trace/${qrModalHarvest.trace_code}/label/`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-outline"
+                style={{ fontSize: "0.85rem" }}
+              >
+                🏷 Xem tem nhãn in dán bao bì
+              </a>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

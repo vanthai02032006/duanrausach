@@ -15,11 +15,11 @@ def serialize_harvest(h):
         "lot_name": h.lot.name,
         "product_name": h.product_name,
         "quantity_kg": float(h.quantity_kg),
-        "quality_grade": h.quality_grade,
-        "quality_grade_display": h.get_quality_grade_display(),
+        "quality_grade": h.quality,
+        "quality_grade_display": h.get_quality_display(),
         "harvested_at": str(h.harvested_at),
         "recorded_by": h.recorded_by.username if h.recorded_by else "Hệ thống",
-        "note": h.note,
+        "note": h.notes,
     }
 
 
@@ -40,7 +40,9 @@ def harvest_create_view(request):
     lot_id = data.get("lot_id")
     product_name = data.get("product_name", "").strip()
     quantity_kg = data.get("quantity_kg")
-    quality_grade = data.get("quality_grade", Harvest.Grade.A)
+    quality_grade = data.get("quality_grade", Harvest.Quality.PENDING)
+    if quality_grade not in Harvest.Quality.values:
+        quality_grade = Harvest.Quality.PENDING
     harvested_at = data.get("harvested_at")
     note = data.get("note", "").strip()
 

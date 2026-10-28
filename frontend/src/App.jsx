@@ -17,6 +17,7 @@ import { AccountsPage } from "./pages/AccountsPage";
 import { Sidebar } from "./components/Sidebar";
 import { Navbar } from "./components/Navbar";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { ChatbotWidget } from "./components/ChatbotWidget";
 
 export function App() {
   const { user, loading } = useAuth();
@@ -51,31 +52,44 @@ export function App() {
     accounts: { title: "Quản lý Phân quyền tài khoản", subtitle: "Thiết lập quyền truy cập cho Quản lý, Kỹ thuật viên và Nhân viên" },
   };
 
-  const currentInfo = viewTitles[currentView] || { title: "GreenFarm AI", subtitle: "" };
+  const role = user?.role || "Staff";
+  const isManager = role === "Manager" || role === "Superuser";
+  const isTechOrManager = isManager || role === "Technician";
+
+  // Kiểm tra phân quyền truy cập trang view
+  const canAccessView = (view) => {
+    if (["accounts", "sales", "ai-monitor"].includes(view)) return isManager;
+    if (["knowledge", "reports"].includes(view)) return isTechOrManager;
+    return true;
+  };
+
+  const activeView = canAccessView(currentView) ? currentView : "dashboard";
+  const currentInfo = viewTitles[activeView] || { title: "GreenFarm AI", subtitle: "" };
 
   return (
     <div className="app-container">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+      <Sidebar currentView={activeView} setCurrentView={setCurrentView} />
       <div className="main-wrapper">
         <Navbar title={currentInfo.title} subtitle={currentInfo.subtitle} />
         <main className="content-area">
-          {currentView === "dashboard" && <DashboardPage setCurrentView={setCurrentView} />}
-          {currentView === "lots" && <LotsPage />}
-          {currentView === "varieties" && <VarietiesPage />}
-          {currentView === "care" && <CareLogsPage />}
-          {currentView === "materials" && <MaterialsPage />}
-          {currentView === "harvests" && (
+          {activeView === "dashboard" && <DashboardPage setCurrentView={setCurrentView} />}
+          {activeView === "lots" && <LotsPage />}
+          {activeView === "varieties" && <VarietiesPage />}
+          {activeView === "care" && <CareLogsPage />}
+          {activeView === "materials" && <MaterialsPage />}
+          {activeView === "harvests" && (
             <HarvestsPage setCurrentView={setCurrentView} setTraceCodeToSearch={setTraceCodeToSearch} />
           )}
-          {currentView === "sales" && <SalesPage />}
-          {currentView === "trace" && <TracePage initialCode={traceCodeToSearch} />}
-          {currentView === "ai" && <AIAssistantPage />}
-          {currentView === "knowledge" && <KnowledgePage />}
-          {currentView === "reports" && <ReportsPage />}
-          {currentView === "ai-monitor" && <AIMonitorPage />}
-          {currentView === "accounts" && <AccountsPage />}
+          {activeView === "sales" && <SalesPage />}
+          {activeView === "trace" && <TracePage initialCode={traceCodeToSearch} />}
+          {activeView === "ai" && <AIAssistantPage />}
+          {activeView === "knowledge" && <KnowledgePage />}
+          {activeView === "reports" && <ReportsPage />}
+          {activeView === "ai-monitor" && <AIMonitorPage />}
+          {activeView === "accounts" && <AccountsPage />}
         </main>
       </div>
+      <ChatbotWidget currentView={activeView} setCurrentView={setCurrentView} />
     </div>
   );
 }

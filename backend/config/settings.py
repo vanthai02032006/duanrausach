@@ -13,6 +13,8 @@ def env_bool(name, default=False):
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-demo-key-change-me")
 DEBUG = env_bool("DEBUG", True)
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [u.strip() for u in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if u.strip()]
 
 INSTALLED_APPS = [
@@ -48,10 +50,21 @@ TEMPLATES = [{
 WSGI_APPLICATION = "config.wsgi.application"
 
 # PostgreSQL is the default for Docker/demo deployment. SQLite is a convenient fallback
-# for students opening the code before configuring PostgreSQL.
+# for students opening the code before configuring PostgreSQL or running outside Docker.
 db_url = os.getenv("DATABASE_URL", "sqlite:///" + str(BASE_DIR / "db.sqlite3"))
 parsed = urlparse(db_url)
+use_postgres = False
+
 if parsed.scheme in {"postgres", "postgresql", "postgresql+psycopg"}:
+    use_postgres = True
+    if parsed.hostname == "db":
+        import socket
+        try:
+            socket.gethostbyname("db")
+        except (socket.gaierror, OSError):
+            use_postgres = False
+
+if use_postgres:
     DATABASES = {"default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": unquote(parsed.path.lstrip("/")),
@@ -101,21 +114,31 @@ if not DEBUG:
         SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", False)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "25"))
+SITE_URL = os.getenv("SITE_URL", "http://192.11.12.107:8000").strip().rstrip("/")
 
 # CORS settings for Frontend (React / Vite)
 CORS_ALLOW_CREDENTIALS = True
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 CSRF_TRUSTED_ORIGINS.extend([
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ])
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
 CSRF_COOKIE_HTTPONLY = False  # Allows frontend to read csrftoken cookie
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"

@@ -8,8 +8,9 @@ from farm.controllers import (
     material_list_view, material_create_view, material_update_view, material_usage_create_view,
     harvest_list_view, harvest_create_view,
     sale_list_view, sale_create_view,
-    trace_view,
+    trace_view, trace_qr_image_view, trace_label_image_view, trace_revoke_view, trace_regenerate_view,
     ai_meta_view, ai_generate_view, ai_feedback_view,
+    conversation_list_create_view, conversation_detail_view, chat_send_message_view, chat_feedback_view,
     knowledge_list_view, knowledge_create_view, knowledge_update_view, knowledge_delete_view,
     reports_view, ai_monitor_view,
     account_list_view, account_create_view, account_set_role_view, account_toggle_view,
@@ -59,11 +60,20 @@ urlpatterns = [
 
     # Trace
     path("trace/", trace_view, name="api_trace"),
+    path("trace/<str:code>/", trace_view, name="api_trace_detail"),
+    path("trace/<str:code>/qr/", trace_qr_image_view, name="api_trace_qr"),
+    path("trace/<str:code>/label/", trace_label_image_view, name="api_trace_label"),
+    path("trace/<str:code>/revoke/", trace_revoke_view, name="api_trace_revoke"),
+    path("trace/<str:code>/regenerate/", trace_regenerate_view, name="api_trace_regenerate"),
 
-    # AI
+    # AI Legacy & Chatbot
     path("ai/meta/", ai_meta_view, name="api_ai_meta"),
     path("ai/generate/", ai_generate_view, name="api_ai_generate"),
     path("ai/<int:pk>/feedback/", ai_feedback_view, name="api_ai_feedback"),
+    path("ai/chat/conversations/", conversation_list_create_view, name="api_chat_conversations"),
+    path("ai/chat/conversations/<int:pk>/", conversation_detail_view, name="api_chat_conversation_detail"),
+    path("ai/chat/conversations/<int:pk>/messages/", chat_send_message_view, name="api_chat_send_message"),
+    path("ai/chat/messages/<int:pk>/feedback/", chat_feedback_view, name="api_chat_feedback"),
 
     # Knowledge
     path("knowledge/", knowledge_list_view, name="api_knowledge"),

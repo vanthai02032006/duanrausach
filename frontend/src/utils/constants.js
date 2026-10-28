@@ -29,7 +29,7 @@ export const MATERIAL_CATEGORY_CHOICES = [
 ];
 
 export const HARVEST_GRADE_CHOICES = [
-  { value: "A", label: "Loại A" },
-  { value: "B", label: "Loại B" },
-  { value: "C", label: "Loại C" },
+  { value: "pending", label: "Chờ kiểm tra" },
+  { value: "pass", label: "Đạt yêu cầu" },
+  { value: "review", label: "Cần kiểm tra lại" },
 ];

@@ -11,7 +11,7 @@ def serialize_article(a):
         "id": a.id,
         "title": a.title,
         "category": a.category,
-        "category_display": a.get_category_display(),
+        "category_display": a.category,
         "variety_id": a.variety_id,
         "variety_name": a.variety.name if a.variety else None,
         "content": a.content,
@@ -57,7 +57,7 @@ def knowledge_create_view(request):
 
     article = KnowledgeArticle.objects.create(
         title=title,
-        category=data.get("category", KnowledgeArticle.Category.GENERAL),
+        category=data.get("category") or KnowledgeArticle._meta.get_field("category").default,
         variety=variety,
         content=content,
         source=data.get("source", "").strip(),

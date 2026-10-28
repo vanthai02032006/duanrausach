@@ -10,10 +10,10 @@ def create_harvest_record(lot_id, product_name, quantity_kg, quality_grade, harv
             lot=lot,
             product_name=product_name,
             quantity_kg=Decimal(str(quantity_kg)),
-            quality_grade=quality_grade,
+            quality=quality_grade,
             harvested_at=harvested_at,
             recorded_by=user,
-            note=note,
+            notes=note,
         )
         lot.status = CropLot.Status.HARVESTED
         lot.actual_harvest_date = harvested_at

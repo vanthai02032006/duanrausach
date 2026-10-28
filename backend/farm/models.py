@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from django.conf import settings
 from django.core.validators import MinValueValidator
@@ -6,7 +7,8 @@ from django.utils import timezone
 
 
 def make_trace_code():
-    return "GF-" + uuid.uuid4().hex[:10].upper()
+    # Cryptographically secure, unguessable trace code (e.g. GF-A3F8B29C1E0D)
+    return "GF-" + secrets.token_hex(6).upper()
 
 
 class CropVariety(models.Model):
@@ -41,6 +43,7 @@ class CropLot(models.Model):
     expected_harvest_date = models.DateField("Ngày thu hoạch dự kiến", blank=True, null=True)
     actual_harvest_date = models.DateField("Ngày thu hoạch thực tế", blank=True, null=True)
     status = models.CharField("Trạng thái", max_length=16, choices=Status.choices, default=Status.PLANNED)
+    is_active = models.BooleanField("Hiệu lực truy xuất", default=True)
     notes = models.TextField("Ghi chú", blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="created_crop_lots")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -144,6 +147,10 @@ class Harvest(models.Model):
     quality = models.CharField("Kiểm tra chất lượng", max_length=16, choices=Quality.choices, default=Quality.PENDING)
     harvested_at = models.DateField("Ngày thu hoạch", default=timezone.localdate)
     trace_code = models.CharField("Mã truy xuất", max_length=40, unique=True, default=make_trace_code, editable=False)
+    is_active = models.BooleanField("Hiệu lực truy xuất", default=True, help_text="Trạng thái hiệu lực của tem/mã truy xuất")
+    revoked_at = models.DateTimeField("Thời điểm vô hiệu hóa", null=True, blank=True)
+    revoked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="revoked_harvests")
+    revocation_reason = models.CharField("Lý do vô hiệu hóa", max_length=255, blank=True)
     recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="harvest_records")
     notes = models.TextField("Ghi chú chất lượng", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -230,3 +237,91 @@ class AIInteraction(models.Model):
 
     def __str__(self):
         return f"{self.get_task_display()} - {self.created_at:%d/%m/%Y %H:%M}"
+
+
+class ChatConversation(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="chat_conversations",
+        verbose_name="Người dùng",
+    )
+    title = models.CharField("Tiêu đề cuộc trò chuyện", max_length=200, default="Cuộc trò chuyện mới")
+    crop_lot = models.ForeignKey(
+        CropLot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="chat_conversations",
+        verbose_name="Lô trồng ngữ cảnh",
+    )
+    is_archived = models.BooleanField("Đã lưu trữ", default=False)
+    created_at = models.DateTimeField("Thời điểm tạo", auto_now_add=True)
+    updated_at = models.DateTimeField("Cập nhật lần cuối", auto_now=True, db_index=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Cuộc hội thoại AI"
+        verbose_name_plural = "Cuộc hội thoại AI"
+
+    def __str__(self):
+        return f"{self.title} ({self.user.username})"
+
+
+class ChatMessage(models.Model):
+    class Role(models.TextChoices):
+        USER = "user", "Người dùng"
+        ASSISTANT = "assistant", "Trợ lý AI"
+
+    conversation = models.ForeignKey(
+        ChatConversation,
+        on_delete=models.CASCADE,
+        related_name="messages",
+        verbose_name="Cuộc hội thoại",
+    )
+    role = models.CharField("Vai trò", max_length=20, choices=Role.choices)
+    content = models.TextField("Nội dung tin nhắn")
+    status = models.CharField("Trạng thái", max_length=20, default="done")
+    model_name = models.CharField("Model AI", max_length=80, blank=True)
+    latency_ms = models.PositiveIntegerField("Thời gian phản hồi (ms)", default=0)
+    references_data = models.JSONField("Dữ liệu tham chiếu thực tế", default=dict, blank=True)
+    created_at = models.DateTimeField("Thời điểm gửi", auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = "Tin nhắn hội thoại"
+        verbose_name_plural = "Tin nhắn hội thoại"
+
+    def __str__(self):
+        return f"[{self.role}] {self.content[:40]}..."
+
+
+class ChatFeedback(models.Model):
+    class Rating(models.IntegerChoices):
+        HELPFUL = 1, "Hữu ích"
+        NOT_HELPFUL = -1, "Chưa hữu ích"
+
+    message = models.OneToOneField(
+        ChatMessage,
+        on_delete=models.CASCADE,
+        related_name="feedback",
+        verbose_name="Tin nhắn AI",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="chat_feedbacks",
+        verbose_name="Người đánh giá",
+    )
+    rating = models.SmallIntegerField("Đánh giá", choices=Rating.choices)
+    comment = models.TextField("Góp ý thêm", blank=True)
+    created_at = models.DateTimeField("Thời điểm đánh giá", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Đánh giá tin nhắn"
+        verbose_name_plural = "Đánh giá tin nhắn"
+
+    def __str__(self):
+        return f"Feedback for msg #{self.message_id}: {self.get_rating_display()}"

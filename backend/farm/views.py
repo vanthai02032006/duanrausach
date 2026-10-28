@@ -22,6 +22,13 @@ from .models import (
     Material, MaterialUsage, Sale,
 )
 from .roles import get_user_role, role_required
+from farm.services.trace_service import (
+    trace_by_code, extract_code_from_raw_input, revoke_trace_code, regenerate_trace_code,
+)
+from farm.services.qr_service import (
+    build_public_trace_url, generate_qr_data_uri, generate_qr_image, generate_printable_label_png,
+)
+from django.http import HttpResponse
 
 User = get_user_model()
 
@@ -265,23 +272,111 @@ def sale_create(request):
     return render(request, "farm/form.html", {"form": form, "title": "Tạo phiếu bán hàng", "back_url": "sales", "submit_label": "Lưu phiếu bán"})
 
 
-@role_required("Manager", "Technician", "Staff")
-def trace_search(request):
-    code = request.GET.get("code", "").strip()
-    lot = None; harvests = Harvest.objects.none(); found_by = ""
-    if code:
-        lot = CropLot.objects.filter(code__iexact=code).select_related("variety").first()
-        if lot:
-            found_by = "Mã lô trồng"
-            harvests = Harvest.objects.filter(lot=lot).select_related("recorded_by")
-        else:
-            harvest = Harvest.objects.filter(trace_code__iexact=code).select_related("lot__variety").first()
-            if harvest:
-                lot = harvest.lot; found_by = "Mã truy xuất thu hoạch"
-                harvests = Harvest.objects.filter(lot=lot).select_related("recorded_by")
-    logs = CareLog.objects.filter(lot=lot).select_related("performed_by")[:30] if lot else []
-    usages = MaterialUsage.objects.filter(lot=lot).select_related("material", "used_by")[:20] if lot else []
-    return render(request, "farm/trace.html", {"code": code, "lot": lot, "harvests": harvests, "logs": logs, "usages": usages, "found_by": found_by, "searched": bool(code)})
+def trace_search(request, code=None):
+    """Trang tra cứu và truy xuất nguồn gốc công khai (không yêu cầu đăng nhập).
+    Hỗ trợ quét mã QR bằng camera và tra cứu thủ công bằng mã.
+    """
+    raw_code = code or request.GET.get("code", "")
+    clean_code = extract_code_from_raw_input(raw_code)
+
+    trace_data = None
+    qr_data_uri = ""
+    public_url = ""
+
+    if clean_code:
+        trace_data = trace_by_code(clean_code, include_internal=request.user.is_authenticated)
+        if trace_data and trace_data.get("found"):
+            target_code = trace_data.get("code", clean_code)
+            public_url = build_public_trace_url(request, target_code)
+            qr_data_uri = generate_qr_data_uri(public_url, format="png", box_size=6)
+
+    # Context objects for template rendering
+    lot_obj = None
+    harvests_list = []
+    logs_list = []
+    usages_list = []
+    if clean_code:
+        lot_obj = CropLot.objects.filter(code__iexact=clean_code).select_related("variety").first()
+        if not lot_obj:
+            h_obj = Harvest.objects.filter(trace_code__iexact=clean_code).select_related("lot__variety").first()
+            if h_obj:
+                lot_obj = h_obj.lot
+        if lot_obj:
+            harvests_list = Harvest.objects.filter(lot=lot_obj).select_related("recorded_by")
+            logs_list = CareLog.objects.filter(lot=lot_obj).select_related("performed_by")[:30]
+            usages_list = MaterialUsage.objects.filter(lot=lot_obj).select_related("material", "used_by")[:20]
+
+    return render(request, "farm/trace.html", {
+        "code": clean_code,
+        "searched": bool(clean_code),
+        "trace_data": trace_data,
+        "qr_data_uri": qr_data_uri,
+        "public_url": public_url,
+        "lot": lot_obj,
+        "found_by": trace_data.get("found_by") if trace_data else "",
+        "harvests": harvests_list,
+        "logs": logs_list,
+        "usages": usages_list,
+        "is_manager": request.user.is_authenticated and (get_user_role(request.user) == "Manager" or request.user.is_superuser),
+    })
+
+
+def qr_code_download(request, code):
+    """Download or view PNG QR code image."""
+    clean_code = extract_code_from_raw_input(code)
+    public_url = build_public_trace_url(request, clean_code)
+    img_bytes = generate_qr_image(public_url, format="png", box_size=8, border=2)
+    response = HttpResponse(img_bytes, content_type="image/png")
+    if request.GET.get("download") == "1":
+        response["Content-Disposition"] = f'attachment; filename="qr-{clean_code}.png"'
+    else:
+        response["Content-Disposition"] = f'inline; filename="qr-{clean_code}.png"'
+    return response
+
+
+def qr_label_view(request, code):
+    """View or print a dedicated sticker label with QR code."""
+    clean_code = extract_code_from_raw_input(code)
+    harvest = Harvest.objects.filter(trace_code__iexact=clean_code).select_related("lot__variety").first()
+    if not harvest:
+        messages.error(request, "Không tìm thấy phiếu thu hoạch để in nhãn.")
+        return redirect("trace")
+
+    public_url = build_public_trace_url(request, harvest.trace_code)
+    qr_data_uri = generate_qr_data_uri(public_url, format="png", box_size=7)
+
+    return render(request, "farm/label_print.html", {
+        "harvest": harvest,
+        "qr_data_uri": qr_data_uri,
+        "public_url": public_url,
+    })
+
+
+@require_POST
+@role_required("Manager")
+def trace_revoke_action(request, code):
+    """Quản lý vô hiệu hóa tem truy xuất."""
+    clean_code = extract_code_from_raw_input(code)
+    reason = request.POST.get("reason", "").strip() or "Vô hiệu hóa bởi Quản lý trang trại"
+    success, msg = revoke_trace_code(clean_code, request.user, reason=reason)
+    if success:
+        messages.success(request, msg)
+    else:
+        messages.error(request, msg)
+    return redirect(request.META.get("HTTP_REFERER", "harvests"))
+
+
+@require_POST
+@role_required("Manager")
+def trace_regenerate_action(request, code):
+    """Quản lý cấp lại mã truy xuất mới cho đợt thu hoạch."""
+    clean_code = extract_code_from_raw_input(code)
+    harvest, msg = regenerate_trace_code(clean_code, request.user)
+    if harvest:
+        messages.success(request, msg)
+    else:
+        messages.error(request, msg)
+    return redirect(request.META.get("HTTP_REFERER", "harvests"))
 
 
 @role_required("Manager", "Technician", "Staff")

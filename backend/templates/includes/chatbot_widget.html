@@ -1,0 +1,85 @@
+{% load static %}
+<!-- GreenFarm AI Floating Chatbot Widget -->
+<link rel="stylesheet" href="{% static 'farm/css/chatbot-widget.css' %}">
+
+<div id="gf-chatbot-widget" class="gf-chatbot-widget" data-user-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}" {% if lot %}data-lot-id="{{ lot.id }}" data-lot-code="{{ lot.code }}"{% endif %}>
+  {% csrf_token %}
+  
+  <!-- Floating Trigger Button -->
+  <button id="gf-chat-trigger-btn" class="gf-chat-trigger" type="button" aria-label="Mở Trợ lý GreenFarm AI" title="Trợ lý GreenFarm AI">
+    <span class="gf-chat-trigger-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+        <path d="M12 2a8 8 0 0 0-8 8c0 3.3 2 6.2 5 7.4V20a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2.6c3-1.2 5-4.1 5-7.4a8 8 0 0 0-8-8z"/>
+        <path d="M9.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+        <path d="M14.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+        <path d="M8.5 14s1 1.5 3.5 1.5 3.5-1.5 3.5-1.5"/>
+      </svg>
+    </span>
+    <span id="gf-chat-unread-badge" class="gf-chat-unread-badge" style="display: none;">0</span>
+  </button>
+
+  <!-- Floating Chat Window -->
+  <div id="gf-chat-window" class="gf-chat-window" role="dialog" aria-label="Cửa sổ trò chuyện GreenFarm AI">
+    <!-- Header -->
+    <div class="gf-chat-header">
+      <div class="gf-chat-header-info">
+        <div class="gf-chat-avatar">🌱</div>
+        <div class="gf-chat-title-group">
+          <h4>Trợ lý GreenFarm AI</h4>
+          <p class="gf-chat-subtitle">
+            <span id="gf-status-indicator" class="gf-status-indicator"></span>
+            <span id="gf-status-text">Hỗ trợ quản lý trang trại</span>
+          </p>
+        </div>
+      </div>
+      <div class="gf-chat-header-actions">
+        <button id="gf-chat-new-btn" class="gf-header-btn" type="button" title="Cuộc trò chuyện mới" aria-label="Tạo cuộc trò chuyện mới">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <a id="gf-chat-fullscreen-btn" href="{% url 'ai_assistant' %}" class="gf-header-btn" title="Mở trang Trợ lý AI đầy đủ" aria-label="Mở trang đầy đủ">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        </a>
+        <button id="gf-chat-close-btn" class="gf-header-btn" type="button" title="Đóng cửa sổ" aria-label="Đóng cửa sổ">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Lot Context Pill (if on lot page) -->
+    <div id="gf-lot-context-banner" class="gf-lot-context-banner" style="display: none;">
+      <span>🌱 Ngữ cảnh: <strong id="gf-lot-context-name">Lô trồng</strong></span>
+      <button type="button" id="gf-clear-lot-context-btn" title="Bỏ chọn ngữ cảnh lô" style="background:none;border:none;cursor:pointer;color:#065f46;font-size:12px;">✕</button>
+    </div>
+
+    <!-- Chat Body -->
+    <div id="gf-chat-body" class="gf-chat-body">
+      <!-- Welcome message and chat history rendered dynamically -->
+    </div>
+
+    <!-- Chat Footer / Input Row -->
+    <div class="gf-chat-footer">
+      <div class="gf-input-row">
+        <textarea id="gf-chat-textarea" class="gf-textarea" placeholder="Nhập câu hỏi nông nghiệp... (Shift+Enter xuống dòng)" rows="1" maxlength="3000"></textarea>
+        <button id="gf-chat-send-btn" class="gf-send-btn" type="button" title="Gửi câu hỏi" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'farm/js/chatbot-widget.js' %}"></script>
